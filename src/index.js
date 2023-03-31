@@ -3,11 +3,10 @@ import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
 import axios from 'axios';
 import './sass/styles.css';
+import createContent from './murkap';
+import galleryСleaning from './murkapCleaner';
 //================================================================
-const BASE_URL = 'https://pixabay.com/api';
-const API_KEY = 'key=34734183-f822af85241d99cf90dda111a';
-const limit = 40;
-let page = 1;
+
 //================================================================
 const refs = {
   formImages: document.querySelector('.search-form'),
@@ -19,21 +18,31 @@ const refs = {
 refs.formImages.addEventListener('submit', onSubmitForm);
 refs.loadMoreBtn.addEventListener('click', onSubmitForm);
 //================================================================
+let page = 1;
+const limit = 40;
+const BASE_URL = 'https://pixabay.com/api';
+const API_KEY = 'key=34734183-f822af85241d99cf90dda111a';
+const searchParams = new URLSearchParams({
+  image_type: 'photo',
+  orientation: 'horizontal',
+  safesearch: true,
+  page: page,
+  per_page: limit,
+});
 async function onSubmitForm(e) {
   e.preventDefault();
   const searchQuery = refs.formInput.value.trim();
 
   try {
     const response = await axios.get(
-      `${BASE_URL}/?${API_KEY}&q=${searchQuery}&image_type=photo&orientation=horizontal&safesearch=true&page=${page}&per_page=${limit}`
+      `${BASE_URL}/?${API_KEY}&q=${searchQuery}&${searchParams}`
     );
+    console.log(response);
     const numberOfImages = response.data.totalHits;
     const valueQuery = response.data.hits;
     const totalPages = Math.ceil(numberOfImages - limit * page);
     //================================================================
     if (valueQuery.length === 0 || searchQuery === '') {
-      // console.log(valueQuery);
-
       Notiflix.Notify.failure(
         'Sorry, there are no images matching your search query. Please try again.'
       );
@@ -63,33 +72,6 @@ async function onSubmitForm(e) {
   } catch (error) {
     console.log(error);
   }
-}
-function createMurkap(data) {
-  return `<div class="photo-card">
-   <a href="${data.largeImageURL}"><img  class ="image" src="${data.webformatURL}" alt="${data.tags}" loading="lazy" /></a>
-    <div class="info">
-      <p class="info-item">
-        <b>Likes ${data.likes}</b>
-      </p>
-      <p class="info-item">
-        <b>Views ${data.views}</b>
-      </p>
-      <p class="info-item">
-        <b>Comments ${data.comments}</b>
-      </p>
-      <p class="info-item">
-        <b>Downloads ${data.downloads}</b>
-      </p>
-      </div>
-      </div>`;
-}
-function createContent(valueQuery) {
-  const generateContent = valueQuery.map(value => createMurkap(value));
-  refs.Gallery.insertAdjacentHTML('beforeend', generateContent.join(''));
-}
-
-function galleryСleaning() {
-  refs.Gallery.innerHTML = '';
 }
 
 const gallery = new SimpleLightbox('.photo-card a', {
